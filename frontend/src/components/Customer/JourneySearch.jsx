@@ -86,77 +86,179 @@ export default function JourneySearch({ currentUser, onBookingSuccess, setAlert 
 
   return (
     <div>
-      {/* Search Bar Card */}
-      <div className="card search-card">
-        <h2 style={{ margin: '0 0 1rem' }}>Book Bus Tickets Across India on Bussin'</h2>
-        <form onSubmit={handleSearch} className="search-form">
-          <div className="form-group">
-            <label>Origin Station</label>
-            <select
-              value={originStationId}
-              onChange={(e) => setOriginStationId(e.target.value)}
-              disabled={loadingStations}
-            >
-              {stations.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.code}) - {s.city}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Destination Station</label>
-            <select
-              value={destinationStationId}
-              onChange={(e) => setDestinationStationId(e.target.value)}
-              disabled={loadingStations}
-            >
-              {stations.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.code}) - {s.city}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Travel Date</label>
-            <input
-              type="date"
-              required
-              value={travelDate}
-              onChange={(e) => setTravelDate(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Time Window (Optional)</label>
-            <div style={{ display: 'flex', gap: '0.25rem' }}>
-              <input
-                type="time"
-                value={departureFrom}
-                onChange={(e) => setDepartureFrom(e.target.value)}
-                title="Earliest Departure"
-              />
-              <span style={{ alignSelf: 'center', color: '#64748b' }}>to</span>
-              <input
-                type="time"
-                value={departureTo}
-                onChange={(e) => setDepartureTo(e.target.value)}
-                title="Latest Departure"
-              />
+      {/* Hero Banner Section */}
+      <section className="hero-section">
+        <div className="hero-inner">
+          <div>
+            <div className="hero-eyebrow">
+              <span>🇮🇳</span> India's Trusted Intercity Transit Network
+            </div>
+            <h2 className="hero-title">
+              India's No. 1 Online Bus Ticket Booking Site
+            </h2>
+            <p className="hero-subtitle">
+              Compare AC Sleeper, Multi-Axle Volvo, and Pushback coaches across major Indian corridors with real-time seat layouts and automated connecting itineraries.
+            </p>
+            <div className="hero-trust-pills">
+              <span className="hero-trust-pill">⚡ Live Seat Lock</span>
+              <span className="hero-trust-pill">🔄 Smart 1-Transfer Fallback</span>
+              <span className="hero-trust-pill">🛡️ Instant E-Ticket &amp; Free Cancellation</span>
             </div>
           </div>
 
-          <div className="form-group search-btn-col">
-            <label>&nbsp;</label>
-            <button type="submit" className="btn btn-primary btn-block" disabled={searching}>
-              {searching ? 'Searching...' : '🔍 Search Trips'}
-            </button>
+          {/* Original Travel Coach & Highway Artwork */}
+          <div className="hero-artwork" aria-hidden="true">
+            <svg className="hero-svg-illustration" viewBox="0 0 380 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Sunset Glow & Distant Hills */}
+              <circle cx="290" cy="62" r="42" fill="#FDE047" fillOpacity="0.28" />
+              <circle cx="290" cy="62" r="26" fill="#FEF08A" fillOpacity="0.45" />
+              <path d="M10 165 Q95 105 185 155 T370 148 L370 185 L10 185 Z" fill="#450A0A" fillOpacity="0.35" />
+              <path d="M40 172 Q155 120 260 162 T370 158 L370 185 L40 185 Z" fill="#1E293B" fillOpacity="0.45" />
+
+              {/* Highway Road */}
+              <rect x="10" y="168" width="360" height="22" rx="11" fill="#0F172A" fillOpacity="0.7" />
+              <line x1="35" y1="179" x2="75" y2="179" stroke="#FACC15" strokeWidth="3" strokeDasharray="10 8" strokeLinecap="round" />
+              <line x1="125" y1="179" x2="185" y2="179" stroke="#FACC15" strokeWidth="3" strokeDasharray="10 8" strokeLinecap="round" />
+              <line x1="235" y1="179" x2="335" y2="179" stroke="#FACC15" strokeWidth="3" strokeDasharray="10 8" strokeLinecap="round" />
+
+              {/* Modern Intercity Luxury Coach */}
+              <g transform="translate(55, 78)">
+                {/* Coach Body */}
+                <rect x="0" y="10" width="255" height="74" rx="14" fill="#FFFFFF" />
+                <path d="M0 54 H255 V70 C255 77.732 248.732 84 241 84 H14 C6.268 84 0 77.732 0 70 V54 Z" fill="#F1F5F9" />
+                {/* Crimson Speed Stripe */}
+                <path d="M8 54 H248 L238 64 H8 Z" fill="#D84E55" />
+                <path d="M30 67 H195 L188 72 H30 Z" fill="#F59E0B" />
+
+                {/* Panoramic Windows */}
+                <rect x="14" y="20" width="42" height="26" rx="5" fill="#1E293B" />
+                <rect x="62" y="20" width="42" height="26" rx="5" fill="#1E293B" />
+                <rect x="110" y="20" width="42" height="26" rx="5" fill="#1E293B" />
+                <rect x="158" y="20" width="42" height="26" rx="5" fill="#1E293B" />
+                <path d="M206 20 H238 C243 20 247 24 248 29 L250 46 H206 V20 Z" fill="#0F172A" />
+
+                {/* Headlight Beam */}
+                <polygon points="255,64 255,76 315,86 315,52" fill="#FEF08A" fillOpacity="0.35" />
+
+                {/* Wheels */}
+                <circle cx="52" cy="84" r="15" fill="#0F172A" />
+                <circle cx="52" cy="84" r="7" fill="#CBD5E1" />
+                <circle cx="88" cy="84" r="15" fill="#0F172A" />
+                <circle cx="88" cy="84" r="7" fill="#CBD5E1" />
+                <circle cx="204" cy="84" r="15" fill="#0F172A" />
+                <circle cx="204" cy="84" r="7" fill="#CBD5E1" />
+              </g>
+            </svg>
           </div>
-        </form>
+        </div>
+      </section>
+
+      {/* Floating Booking Search Widget */}
+      <div className="search-widget-wrapper">
+        <div className="card search-card">
+          <form onSubmit={handleSearch} className="search-form">
+            <div className="search-segment">
+              <label className="search-segment-label">
+                <span>🚏</span> From Station
+              </label>
+              <select
+                value={originStationId}
+                onChange={(e) => setOriginStationId(e.target.value)}
+                disabled={loadingStations}
+              >
+                {stations.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.code}) - {s.city}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="search-segment">
+              <label className="search-segment-label">
+                <span>📍</span> To Station
+              </label>
+              <select
+                value={destinationStationId}
+                onChange={(e) => setDestinationStationId(e.target.value)}
+                disabled={loadingStations}
+              >
+                {stations.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.code}) - {s.city}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="search-segment">
+              <label className="search-segment-label">
+                <span>📅</span> Date of Journey
+              </label>
+              <input
+                type="date"
+                required
+                value={travelDate}
+                onChange={(e) => setTravelDate(e.target.value)}
+              />
+            </div>
+
+            <div className="search-segment">
+              <label className="search-segment-label">
+                <span>🕒</span> Time Window (Optional)
+              </label>
+              <div className="search-time-range">
+                <input
+                  type="time"
+                  value={departureFrom}
+                  onChange={(e) => setDepartureFrom(e.target.value)}
+                  title="Earliest Departure"
+                />
+                <span style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 600 }}>to</span>
+                <input
+                  type="time"
+                  value={departureTo}
+                  onChange={(e) => setDepartureTo(e.target.value)}
+                  title="Latest Departure"
+                />
+              </div>
+            </div>
+
+            <div className="search-btn-col">
+              <button type="submit" className="search-cta-btn" disabled={searching}>
+                {searching ? 'Searching...' : 'SEARCH BUSES'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
+
+      {/* Value Highlights Strip */}
+      {!searchResult && !searching && (
+        <div className="feature-highlights">
+          <div className="feature-highlight-card">
+            <div className="feature-icon-box">💺</div>
+            <div>
+              <strong style={{ display: 'block', fontSize: '0.92rem' }}>Segment-Level Seat Resale</strong>
+              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Book intermediate stops with real-time interval availability.</span>
+            </div>
+          </div>
+          <div className="feature-highlight-card">
+            <div className="feature-icon-box">🔄</div>
+            <div>
+              <strong style={{ display: 'block', fontSize: '0.92rem' }}>Automated Connecting Routes</strong>
+              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Smart 1-transfer fallback when no direct bus operates.</span>
+            </div>
+          </div>
+          <div className="feature-highlight-card">
+            <div className="feature-icon-box">🔒</div>
+            <div>
+              <strong style={{ display: 'block', fontSize: '0.92rem' }}>Atomic Multi-Leg Locking</strong>
+              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Deadlock-free seat reservation with instant printable passes.</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search Results */}
       {searching && (

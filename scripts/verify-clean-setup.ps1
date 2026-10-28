@@ -36,7 +36,9 @@ Write-Host "Found Node: $nodeVersion" -ForegroundColor Gray
 
 # 2. Compile and Run All Backend Unit & Integration Tests
 Write-Host "`n[2/4] Executing Backend Integration Test Suites (JUnit 5 + Spring Boot)..." -ForegroundColor Yellow
-$env:MAVEN_USER_HOME = "$PWD\.m2"
+if (Test-Path "$PWD\.m2") {
+    $env:MAVEN_USER_HOME = "$PWD\.m2"
+}
 & .\mvnw.cmd test -DforkCount=0
 if ($LASTEXITCODE -ne 0) {
     Write-Host "`n[FAIL] Backend tests failed with exit code $LASTEXITCODE" -ForegroundColor Red
@@ -47,6 +49,9 @@ Write-Host "[PASS] Backend tests passed completely!" -ForegroundColor Green
 # 3. Build Production React Frontend
 Write-Host "`n[3/4] Building React Frontend with Vite..." -ForegroundColor Yellow
 if (Get-Command npm.cmd -ErrorAction SilentlyContinue) {
+    if (-not (Test-Path "frontend\node_modules\vite\bin\vite.js")) {
+        & npm.cmd install --prefix frontend
+    }
     & npm.cmd run build --prefix frontend
 } else {
     Push-Location frontend

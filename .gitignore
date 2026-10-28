@@ -1,7 +1,112 @@
-.m2/
-target/
-pgdata/
-frontend/node_modules/
-frontend/dist/
-*.log
+# ============================================================================
+# Bussin' Bus Ticket Booking Platform - .gitignore
+# Stack: Java 17 / Spring Boot 3.3 (Maven) + React 18 / Vite 5 + PostgreSQL
+# ============================================================================
 
+# ----------------------------------------------------------------------------
+# 1. Java & Maven Build Artifacts
+# ----------------------------------------------------------------------------
+target/
+.m2/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.flattened-pom.xml
+
+# Compiled Java classes & archives
+*.class
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+*.jar
+# Keep Maven Wrapper JAR tracked so ./mvnw works out-of-the-box
+!.mvn/wrapper/maven-wrapper.jar
+
+# JVM crash logs
+hs_err_pid*
+replay_pid*
+
+# ----------------------------------------------------------------------------
+# 2. Frontend (React / Vite / Node.js)
+# ----------------------------------------------------------------------------
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+*.local
+
+# Package manager logs & caches
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.npm
+.eslintcache
+.stylelintcache
+
+# ----------------------------------------------------------------------------
+# 3. Database, Logs & Local Runtime State
+# ----------------------------------------------------------------------------
+pgdata/
+*.db
+*.mv.db
+*.trace.db
+*.log
+logs/
+cookies.txt
+login.json
+
+# ----------------------------------------------------------------------------
+# 4. Environment Variables & Secrets
+# ----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+application-secret*.yml
+application-secret*.properties
+
+# ----------------------------------------------------------------------------
+# 5. IDEs & Editors (IntelliJ, Eclipse, VS Code, STS)
+# ----------------------------------------------------------------------------
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+bin/
+
+# ----------------------------------------------------------------------------
+# 6. Operating System Files (Windows / macOS / Linux)
+# ----------------------------------------------------------------------------
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.AppleDouble
+.LSOverride
+*~

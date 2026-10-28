@@ -77,40 +77,42 @@ export default function App() {
       <main className="main-content">
         {/* Quick Demo Test Credential Ribbon */}
         {!currentUser && (
-          <div className="demo-ribbon">
-            <span>💡 <strong>Quick Evaluation Access:</strong> Sign in with seeded credentials:</span>
-            <button
-              className="btn btn-xs btn-outline"
-              onClick={async () => {
-                try {
-                  await apiRequest('/api/v1/auth/login', {
-                    method: 'POST',
-                    body: { email: 'customer@demo.local', password: 'Password@123' }
-                  });
-                  await checkCurrentUser();
-                } catch {
-                  setAuthModalOpen(true);
-                }
-              }}
-            >
-              Sign In as Customer (customer@demo.local)
-            </button>
-            <button
-              className="btn btn-xs btn-outline"
-              onClick={async () => {
-                try {
-                  await apiRequest('/api/v1/auth/login', {
-                    method: 'POST',
-                    body: { email: 'admin@busbooking.local', password: 'Password@123' }
-                  });
-                  await checkCurrentUser();
-                } catch {
-                  setAuthModalOpen(true);
-                }
-              }}
-            >
-              Sign In as Admin (admin@busbooking.local)
-            </button>
+          <div className="demo-ribbon no-print">
+            <span>💡 <strong>Quick Evaluation Access:</strong> Instant 1-click sign-in with seeded accounts:</span>
+            <div className="demo-ribbon-actions">
+              <button
+                className="btn btn-xs btn-outline"
+                onClick={async () => {
+                  try {
+                    await apiRequest('/api/v1/auth/login', {
+                      method: 'POST',
+                      body: { email: 'customer@demo.local', password: 'Password@123' }
+                    });
+                    await checkCurrentUser();
+                  } catch {
+                    setAuthModalOpen(true);
+                  }
+                }}
+              >
+                👤 Sign In as Customer (customer@demo.local)
+              </button>
+              <button
+                className="btn btn-xs btn-outline"
+                onClick={async () => {
+                  try {
+                    await apiRequest('/api/v1/auth/login', {
+                      method: 'POST',
+                      body: { email: 'admin@busbooking.local', password: 'Password@123' }
+                    });
+                    await checkCurrentUser();
+                  } catch {
+                    setAuthModalOpen(true);
+                  }
+                }}
+              >
+                🛡️ Sign In as Admin (admin@busbooking.local)
+              </button>
+            </div>
           </div>
         )}
 

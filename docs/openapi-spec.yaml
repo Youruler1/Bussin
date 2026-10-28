@@ -1,0 +1,1137 @@
+openapi: 3.0.3
+info:
+  title: Bus Ticket Booking Platform API
+  description: |
+    Production REST API specification for the full-stack Bus Ticket Booking Platform.
+    Complies with Saras Sir PDF requirements and approved engineering specification overlay.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+paths:
+  /health:
+    get:
+      summary: Platform health and readiness check
+      operationId: getHealth
+      tags: [Observability]
+      responses:
+        '200':
+          description: Application is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: UP
+
+  /auth/register:
+    post:
+      summary: Register a new customer
+      operationId: registerCustomer
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Customer successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '409':
+          $ref: '#/components/responses/409Conflict'
+
+  /auth/login:
+    post:
+      summary: Authenticate user and initiate session
+      operationId: login
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated successfully, session cookie set
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: JSESSIONID=abc123xyz; Path=/api; HttpOnly; SameSite=Lax
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
+  /auth/logout:
+    post:
+      summary: Terminate current session
+      operationId: logout
+      tags: [Authentication]
+      responses:
+        '204':
+          description: Successfully logged out
+
+  /me:
+    get:
+      summary: Get currently authenticated user profile
+      operationId: getCurrentUser
+      tags: [Customer Profile]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+    put:
+      summary: Update profile details
+      operationId: updateProfile
+      tags: [Customer Profile]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
+  /categories:
+    get:
+      summary: List all active bus categories
+      operationId: listPublicCategories
+      tags: [Catalog]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryResponse'
+
+  /admin/categories:
+    get:
+      summary: Admin list all categories (including inactive)
+      tags: [Admin Categories]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryResponse'
+    post:
+      summary: Create a bus category
+      tags: [Admin Categories]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '409':
+          $ref: '#/components/responses/409Conflict'
+
+  /admin/categories/{id}:
+    put:
+      summary: Update a bus category
+      tags: [Admin Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+    delete:
+      summary: Delete or deactivate category (reference-safe)
+      tags: [Admin Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Category deleted or deactivated
+        '409':
+          description: Category has active bus references (soft-deactivated instead)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /buses:
+    get:
+      summary: List all active buses
+      tags: [Catalog]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BusResponse'
+
+  /admin/buses:
+    get:
+      summary: Admin list all buses (including inactive)
+      tags: [Admin Fleet]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BusResponse'
+    post:
+      summary: Register a new bus and auto-generate seat layout
+      tags: [Admin Fleet]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBusRequest'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusResponse'
+        '409':
+          $ref: '#/components/responses/409Conflict'
+
+  /admin/buses/{id}:
+    put:
+      summary: Update bus details
+      tags: [Admin Fleet]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBusRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusResponse'
+    delete:
+      summary: Delete or soft-deactivate bus (reference-safe)
+      tags: [Admin Fleet]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Bus deleted
+        '409':
+          $ref: '#/components/responses/409Conflict'
+
+  /stations:
+    get:
+      summary: List all active stations
+      tags: [Catalog]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StationResponse'
+
+  /admin/stations:
+    get:
+      summary: Admin list all stations
+      tags: [Admin Stations & Routes]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StationResponse'
+    post:
+      summary: Create a new station
+      tags: [Admin Stations & Routes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStationRequest'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationResponse'
+
+  /admin/stations/{id}:
+    delete:
+      summary: Delete or soft-deactivate station (reference-safe)
+      tags: [Admin Stations & Routes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Station deleted
+        '409':
+          $ref: '#/components/responses/409Conflict'
+
+  /routes:
+    get:
+      summary: List all active routes with ordered stops
+      tags: [Catalog]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RouteResponse'
+
+  /admin/routes:
+    get:
+      summary: Admin list all routes
+      tags: [Admin Stations & Routes]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RouteResponse'
+    post:
+      summary: Create a master route with ordered stops
+      tags: [Admin Stations & Routes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRouteRequest'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteResponse'
+
+  /admin/routes/{id}:
+    delete:
+      summary: Delete or soft-deactivate route (reference-safe)
+      tags: [Admin Stations & Routes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Route deleted
+        '409':
+          $ref: '#/components/responses/409Conflict'
+
+  /trips:
+    get:
+      summary: List all scheduled trips
+      tags: [Trips]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TripResponse'
+
+  /admin/trips:
+    post:
+      summary: Schedule a new trip (generates stop snapshots, segment fares, and TripSeat mutex rows)
+      tags: [Admin Trips]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTripRequest'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripResponse'
+
+  /admin/trips/{id}:
+    delete:
+      summary: Delete or soft-cancel trip (reference-safe if booking legs exist)
+      tags: [Admin Trips]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Unreferenced trip deleted
+        '409':
+          description: Trip has existing bookings; status set to CANCELLED
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /journeys/search:
+    get:
+      summary: Search direct and connecting journeys
+      operationId: searchJourneys
+      tags: [Journey Search]
+      parameters:
+        - name: originStationId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: destinationStationId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: travelDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: '2026-11-01'
+        - name: departureFrom
+          in: query
+          schema:
+            type: string
+            format: time
+            example: '06:00:00'
+        - name: departureTo
+          in: query
+          schema:
+            type: string
+            format: time
+            example: '12:00:00'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JourneySearchResult'
+
+  /trips/{id}/seats:
+    get:
+      summary: Get seat layout and availability for a trip segment
+      operationId: getTripSeats
+      tags: [Journey Search]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: boardIndex
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: alightIndex
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripSeatMapResponse'
+
+  /bookings:
+    post:
+      summary: Book seats for direct or connecting itinerary (Atomic)
+      operationId: createBooking
+      tags: [Bookings]
+      headers:
+        Idempotency-Key:
+          schema:
+            type: string
+          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '409':
+          description: Seat conflict or already booked
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /me/bookings:
+    get:
+      summary: List current user booking history
+      tags: [Bookings]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingSummaryResponse'
+
+  /bookings/{id}:
+    get:
+      summary: Get booking details and printable ticket
+      tags: [Bookings]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /bookings/{id}/cancel:
+    post:
+      summary: Cancel a confirmed booking (Whole itinerary)
+      tags: [Bookings]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /admin/bookings:
+    get:
+      summary: Admin booking ledger (list all customer bookings)
+      tags: [Admin Bookings]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingResponse'
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, fullName, phone]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        fullName:
+          type: string
+        phone:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    UserProfileResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [ROLE_CUSTOMER, ROLE_ADMIN]
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+
+    CategoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        isActive:
+          type: boolean
+
+    CreateCategoryRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+
+    CreateBusRequest:
+      type: object
+      required: [registrationNumber, brand, model, categoryId, totalCapacity]
+      properties:
+        registrationNumber:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        categoryId:
+          type: integer
+        totalCapacity:
+          type: integer
+
+    BusResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        registrationNumber:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        categoryId:
+          type: integer
+        categoryName:
+          type: string
+        totalCapacity:
+          type: integer
+        isActive:
+          type: boolean
+
+    CreateStationRequest:
+      type: object
+      required: [code, name, city, state]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        timezone:
+          type: string
+          default: Asia/Kolkata
+
+    StationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        timezone:
+          type: string
+        isActive:
+          type: boolean
+
+    CreateRouteRequest:
+      type: object
+      required: [routeCode, name, originStationId, destinationStationId, stops]
+      properties:
+        routeCode:
+          type: string
+        name:
+          type: string
+        originStationId:
+          type: integer
+        destinationStationId:
+          type: integer
+        stops:
+          type: array
+          items:
+            type: object
+            required: [stationId, stopOrder, distanceFromPrevKm, typicalDurationMinutes]
+            properties:
+              stationId:
+                type: integer
+              stopOrder:
+                type: integer
+              distanceFromPrevKm:
+                type: number
+              typicalDurationMinutes:
+                type: integer
+
+    RouteResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        routeCode:
+          type: string
+        name:
+          type: string
+        originStationCode:
+          type: string
+        destinationStationCode:
+          type: string
+        totalDistanceKm:
+          type: number
+        isActive:
+          type: boolean
+
+    CreateTripRequest:
+      type: object
+      required: [tripNumber, routeId, busId, serviceDate, scheduledDepartureUtc]
+      properties:
+        tripNumber:
+          type: string
+        routeId:
+          type: integer
+        busId:
+          type: integer
+        serviceDate:
+          type: string
+          format: date
+        scheduledDepartureUtc:
+          type: string
+          format: date-time
+        dwellMinutes:
+          type: integer
+          default: 10
+        baseFarePerKm:
+          type: number
+          default: 2.50
+
+    TripResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        tripNumber:
+          type: string
+        routeId:
+          type: integer
+        routeCode:
+          type: string
+        routeName:
+          type: string
+        busId:
+          type: integer
+        busRegistration:
+          type: string
+        serviceDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED]
+        scheduledDepartureUtc:
+          type: string
+          format: date-time
+        scheduledArrivalUtc:
+          type: string
+          format: date-time
+
+    JourneySearchResult:
+      type: object
+      properties:
+        journeyType:
+          type: string
+          enum: [DIRECT, CONNECTING, NONE]
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/JourneyOption'
+
+    JourneyOption:
+      type: object
+      properties:
+        itineraryType:
+          type: string
+          enum: [DIRECT, CONNECTING]
+        totalDurationMinutes:
+          type: integer
+        totalFareInr:
+          type: number
+          format: double
+        legs:
+          type: array
+          items:
+            $ref: '#/components/schemas/JourneyLegSummary'
+
+    JourneyLegSummary:
+      type: object
+      properties:
+        tripId:
+          type: integer
+        tripNumber:
+          type: string
+        busCategory:
+          type: string
+        busRegistration:
+          type: string
+        originStationName:
+          type: string
+        destinationStationName:
+          type: string
+        boardStopOrder:
+          type: integer
+        alightStopOrder:
+          type: integer
+        departureTime:
+          type: string
+          format: date-time
+        arrivalTime:
+          type: string
+          format: date-time
+        availableSeats:
+          type: integer
+        segmentFareInr:
+          type: number
+
+    TripSeatMapResponse:
+      type: object
+      properties:
+        tripId:
+          type: integer
+        totalCapacity:
+          type: integer
+        seats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeatItem'
+
+    SeatItem:
+      type: object
+      properties:
+        seatId:
+          type: integer
+        seatNumber:
+          type: string
+        rowNumber:
+          type: integer
+        columnNumber:
+          type: integer
+        seatType:
+          type: string
+        deck:
+          type: string
+        available:
+          type: boolean
+
+    CreateBookingRequest:
+      type: object
+      required: [contactEmail, contactPhone, passengerBookings]
+      properties:
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+        passengerBookings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PassengerLegBooking'
+
+    PassengerLegBooking:
+      type: object
+      required: [passengerName, passengerAge, passengerGender, legAllocations]
+      properties:
+        passengerName:
+          type: string
+        passengerAge:
+          type: integer
+        passengerGender:
+          type: string
+        legAllocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/LegAllocationRequest'
+
+    LegAllocationRequest:
+      type: object
+      required: [tripId, seatId, boardStopOrder, alightStopOrder]
+      properties:
+        tripId:
+          type: integer
+        seatId:
+          type: integer
+        boardStopOrder:
+          type: integer
+        alightStopOrder:
+          type: integer
+
+    BookingResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookingReference:
+          type: string
+        status:
+          type: string
+          enum: [CONFIRMED, PAYMENT_PENDING, CANCELLED]
+        totalAmountInr:
+          type: number
+        bookedAt:
+          type: string
+          format: date-time
+        cancelledAt:
+          type: string
+          format: date-time
+          nullable: true
+        legs:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingLegDetail'
+
+    BookingLegDetail:
+      type: object
+      properties:
+        tripId:
+          type: integer
+        tripNumber:
+          type: string
+        boardStationName:
+          type: string
+        alightStationName:
+          type: string
+        departureTime:
+          type: string
+          format: date-time
+        arrivalTime:
+          type: string
+          format: date-time
+        allocatedSeats:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllocatedSeatDetail'
+
+    AllocatedSeatDetail:
+      type: object
+      properties:
+        seatNumber:
+          type: string
+        passengerName:
+          type: string
+        passengerAge:
+          type: integer
+        fareInr:
+          type: number
+
+    BookingSummaryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookingReference:
+          type: string
+        status:
+          type: string
+        totalAmountInr:
+          type: number
+        bookedAt:
+          type: string
+          format: date-time
+        routeSummary:
+          type: string
+
+    ProblemDetail:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+        code:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+
+    ValidationError:
+      type: object
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+
+  responses:
+    400BadRequest:
+      description: Invalid request parameters or semantic validation failure
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    401Unauthorized:
+      description: Unauthenticated access
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    403Forbidden:
+      description: Forbidden - Insufficient permissions or ownership mismatch
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    404NotFound:
+      description: Target resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    409Conflict:
+      description: Resource conflict or seat allocation overlap
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'

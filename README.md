@@ -28,15 +28,24 @@ A production-grade, highly reliable **modular monolith** for intercity bus ticke
 
 ## 🚀 Quickstart & Setup
 
+> **🪟 New Windows Machine?** See [**`WINDOWS_SETUP.md`**](./WINDOWS_SETUP.md) for a complete, step-by-step guide covering `winget` prerequisite installation, `JAVA_HOME` configuration, PowerShell execution policy, offline Maven `.m2` cache usage, and troubleshooting.
+
 ### Prerequisites
-* **Java:** JDK 17+ (e.g. OpenLogic OpenJDK 17)
+* **Java:** JDK 17+ (e.g. Eclipse Adoptium Temurin 17 or Oracle JDK 17)
 * **Node.js:** Node 18+ and npm
-* **Docker:** (Optional) for PostgreSQL 15 `docker compose up -d`
+* **Database:** None required for `local` profile (in-memory H2 in PostgreSQL mode with full demo seed data), or **PostgreSQL 15/16** (`docker compose up -d`) for persistent mode.
+
+### 0. One-Click Windows Launch (Backend + Frontend)
+In PowerShell from the project root:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\run-windows.ps1
+```
+*(Pass `-Mode postgres` to connect to PostgreSQL on `localhost:5432` instead of the default zero-setup `local` profile).*
 
 ### 1. Run Complete Verification Suite (One-Click)
 In PowerShell:
 ```powershell
-.\scripts\verify-clean-setup.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\verify-clean-setup.ps1
 ```
 Or in Bash / Linux:
 ```bash
@@ -46,23 +55,35 @@ Or in Bash / Linux:
 ### 2. Live Interactive Terminal Demonstration (R16 Flow)
 With the application running on port 8080:
 ```powershell
-.\scripts\demo-walkthrough.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\demo-walkthrough.ps1
 ```
 This executes the full customer journey: authentication, station search, seat map inspection, atomic seat locking, printable ticket retrieval, occupancy verification, and cancellation with instant seat release.
 
-### 3. Run Backend Application
+### 3. Run Backend Application Manually
+**Zero-Setup Mode (`local` profile with H2 & full demo seed data):**
 ```powershell
+$env:SPRING_PROFILES_ACTIVE = "local"
+.\mvnw.cmd spring-boot:run
+```
+**PostgreSQL Mode (`default` profile on `localhost:5432`):**
+```powershell
+docker compose up -d
 .\mvnw.cmd spring-boot:run
 ```
 Backend will start on `http://localhost:8080`.
 
-### 4. Run Frontend Dev Server
+### 4. Run Frontend Dev Server Manually
 ```powershell
 cd frontend
 npm install
 npm run dev
 ```
 Frontend will be available at `http://localhost:5173`.
+
+### 5. Run Backend JUnit 5 Test Suite on Windows
+```powershell
+.\mvnw.cmd test -DforkCount=0
+```
 
 ---
 
@@ -83,10 +104,10 @@ The platform comes pre-seeded with baseline accounts:
 
 | ID | Specification Requirement | Verification Status | Verification Test Class / Evidence |
 |---|---|:---:|---|
-| **R01** | Admin Category CRUD with Reference-Safe Delete | ✅ PASS | `CategoryControllerIntegrationTest` (6 tests) |
+| **R01** | Admin Category CRUD with Reference-Safe Delete | ✅ PASS | `CategoryControllerIntegrationTest` (6 tests), `CategoryServiceTest` (8 tests) |
 | **R02** | Bus CRUD with Auto-Layout Generation | ✅ PASS | `BusControllerIntegrationTest` (9 tests) |
-| **R03** | Route & Trip CRUD with Monotonicity & Mutex Rows | ✅ PASS | `RouteControllerIntegrationTest` (8 tests), `TripControllerIntegrationTest` (6 tests) |
-| **R04** | Customer Auth, Registration & RBAC Session | ✅ PASS | `AuthControllerTest` (8 tests), `UserControllerTest` (6 tests) |
+| **R03** | Station, Route & Trip CRUD with Monotonicity & Mutex Rows | ✅ PASS | `StationControllerIntegrationTest`, `RouteControllerIntegrationTest` (8 tests), `TripControllerIntegrationTest` (6 tests) |
+| **R04** | Customer Auth, Registration & RBAC Session | ✅ PASS | `AuthControllerTest` (8 tests) |
 | **R05** | Direct Journey Search & Pricing | ✅ PASS | `JourneySearchIntegrationTest` (7 tests) |
 | **R06** | Disjoint Partial-Route Interval Resale | ✅ PASS | `BookingServiceIntegrationTest` (5 tests) |
 | **R07** | Overlapping Segment Rejection (409 Conflict) | ✅ PASS | `BookingServiceIntegrationTest` |
@@ -95,22 +116,36 @@ The platform comes pre-seeded with baseline accounts:
 | **R10** | Multi-Leg Atomic Booking & Rollback | ✅ PASS | `BookingServiceIntegrationTest` |
 | **R11** | Whole-Itinerary Cancellation & Seat Release | ✅ PASS | `BookingLifecycleIntegrationTest` (7 tests) |
 | **R12** | Price Snapshotting (Fare Edits Invariant) | ✅ PASS | `BookingServiceIntegrationTest` |
-| **R13** | Validation & ProblemDetail (RFC 9457, MDC Tracing) | ✅ PASS | `CorrelationIdFilterTest` (2 tests), `GlobalExceptionHandler` |
+| **R13** | Validation & ProblemDetail (RFC 9457, MDC Tracing) | ✅ PASS | `CorrelationIdFilterTest` (2 tests), `HealthCheckControllerTest`, `GlobalExceptionHandler` |
 | **R14** | Security & Ownership Checks (Customer vs Admin) | ✅ PASS | `BookingLifecycleIntegrationTest` |
-| **R15** | Relational Flyway Schema & Seed Migrations | ✅ PASS | `V1__init_schema.sql`, `V2__seed_reference_data.sql` |
-| **R16** | End-to-End Visual Seat Map & Layout Grid | ✅ PASS | `SeatMapModal.jsx`, `npm run build` |
+| **R15** | Relational Flyway Schema & Seed Migrations | ✅ PASS | `BusBookingApplicationTests`, `V1__init_schema.sql`, `V2__seed_reference_data.sql` |
+| **R16** | End-to-End Visual Seat Map & Layout Grid | ✅ PASS | `SeatMapModal.jsx`, `scripts/demo-walkthrough.ps1`, `npm run build` |
 | **R17** | Printable Ticket & Responsive Customer UI | ✅ PASS | `PrintableTicket.jsx` (`@media print`), `BookingHistory.jsx` |
 | **R18** | P1 Hold Status Invariants | ✅ PASS | Pre-configured in `SeatAllocation` status enum (`CONFIRMED`, `HELD`) |
 | **R19** | P1 Payment Idempotency Schema | ✅ PASS | Idempotency tokens, `payment_transaction` table |
-| **R20** | Clean-Machine Setup & Reproduction Scripts | ✅ PASS | `scripts/verify-clean-setup.ps1`, `scripts/verify-clean-setup.sh` |
+| **R20** | Clean-Machine Setup & Reproduction Scripts | ✅ PASS | `WINDOWS_SETUP.md`, `run-windows.ps1`, `scripts/verify-clean-setup.ps1`, `scripts/verify-clean-setup.sh` |
 
 ---
 
-## 📦 Project Deliverables & Artifacts
+## 📦 Project Deliverables & Documentation Hub
 
-All architectural decisions, schemas, OpenAPI drafts, and requirement mappings are preserved in the artifact repository:
-* `implementation-plan-and-adrs.md`: Architectural Decision Records (ADR-01 through ADR-07).
-* `requirements-traceability-matrix.md`: Bidirectional traceability to Saras Sir's PDF.
-* `database-schema-and-ddl.md`: Relational DDL schema with indexes and constraints.
-* `openapi-spec.yaml`: OpenAPI 3.0 specification contract.
-* `test-verification-matrix.md`: Detailed test suite execution mapping.
+See [**`docs/README.md`**](./docs/README.md) for the complete documentation index. All architectural decisions, schemas, OpenAPI specs, setup guides, and requirement mappings are organized in the repository:
+
+### 1. Setup & Execution Guides
+* [**`WINDOWS_SETUP.md`**](./WINDOWS_SETUP.md): Step-by-step Windows 10/11 setup, build, test, and troubleshooting guide.
+* [**`run-windows.ps1`**](./run-windows.ps1): One-click Windows PowerShell launcher for Backend (`:8080`) + Frontend (`:5173`).
+* [**`scripts/verify-clean-setup.ps1`**](./scripts/verify-clean-setup.ps1): Automated backend test suite + frontend build verification script.
+* [**`scripts/demo-walkthrough.ps1`**](./scripts/demo-walkthrough.ps1): Interactive CLI walkthrough of the end-to-end customer booking flow.
+
+### 2. Architecture, Schema & API Artifacts (`docs/`)
+* [**`docs/implementation-plan-and-adrs.md`**](./docs/implementation-plan-and-adrs.md): Architectural Decision Records (**ADR-01** through **ADR-08**) and D1–D15 delivery plan.
+* [**`docs/database-schema-and-ddl.md`**](./docs/database-schema-and-ddl.md): Relational ER diagram, interval invariants, and PostgreSQL DDL schema with indexes and constraints.
+* [**`docs/openapi-spec.yaml`**](./docs/openapi-spec.yaml): Complete OpenAPI 3.0.3 REST specification contract.
+
+### 3. Traceability, Verification & Baseline Specifications (`docs/`)
+* [**`docs/requirements-traceability-matrix.md`**](./docs/requirements-traceability-matrix.md): Bidirectional traceability to Saras Sir's PDF (`REQ-ADM-*`, `REQ-CST-*`, `REQ-BKG-*`, `REQ-SEC-*`, `REQ-UI-*`).
+* [**`docs/test-verification-matrix.md`**](./docs/test-verification-matrix.md): Detailed R01–R20 test suite execution mapping to all 15 JUnit 5 test classes.
+* [**`docs/engineering-spec.md`**](./docs/engineering-spec.md): Approved engineering specification overlay.
+* [**`docs/acceptance-tests.md`**](./docs/acceptance-tests.md): Baseline R01–R20 acceptance criteria.
+* [**`docs/delivery-plan.md`**](./docs/delivery-plan.md): 15-day milestone delivery schedule and quality gates.
+* [**`docs/reference/BusTicketBookingApp_Spec.pdf`**](./docs/reference/BusTicketBookingApp_Spec.pdf): Saras Sir's mandatory baseline project specification PDF.
