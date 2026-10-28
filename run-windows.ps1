@@ -133,7 +133,7 @@ if (-not (Test-Path 'node_modules\vite\bin\vite.js')) {
     npm install
 }
 Write-Host 'Starting Vite Frontend Dev Server on http://localhost:5173 ...' -ForegroundColor Cyan
-node .\node_modules\vite\bin\vite.js --host 127.0.0.1 --port 5173
+node .\node_modules\vite\bin\vite.js --host localhost --port 5173
 "@
 
 Write-Host "[2/2] Launching Frontend Dev Server (port 5173)..." -ForegroundColor Yellow
